@@ -230,17 +230,40 @@
   .week-tab.active { background: var(--blush-dark); color: white; }
 
   /* Day rows */
-  .day-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f5ece8; cursor: pointer; }
+  .day-row { padding: 12px 0; border-bottom: 1px solid #f5ece8; }
   .day-row:last-child { border-bottom: none; }
+  .day-row-top { display: flex; align-items: center; gap: 12px; cursor: pointer; }
   .day-num { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; background: #f5ece8; color: var(--text-light); }
   .day-num.today { background: var(--blush-dark); color: white; }
   .day-num.done { background: var(--sage-dark); color: white; }
   .day-content { flex: 1; }
   .day-label { font-size: 13px; font-weight: 600; color: var(--text); }
   .day-task { font-size: 12px; color: var(--text-light); margin-top: 2px; line-height: 1.4; }
-  .day-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #e0d0c8; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
+  .day-expand { font-size: 13px; color: var(--text-muted); flex-shrink: 0; transition: transform 0.2s; }
+  .day-expand.open { transform: rotate(180deg); }
+  .day-check { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #e0d0c8; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; cursor: pointer; }
   .day-check.checked { background: var(--sage-dark); border-color: var(--sage-dark); }
   .day-check.checked::after { content: '✓'; color: white; font-size: 12px; font-weight: 700; }
+  .day-detail {
+    display: none;
+    margin-top: 10px;
+    margin-left: 48px;
+    background: var(--cream);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+  .day-detail.open { display: block; }
+  .day-detail-goal {
+    margin-top: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--sage-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
 
   /* Feed cards */
   .feed-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -316,6 +339,7 @@
   .outcome-btn { flex: 1; min-width: 80px; padding: 10px 8px; border-radius: 10px; border: 2px solid #e8dcd8; background: white; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.15s; color: var(--text); }
   .outcome-btn.selected { border-color: var(--blush-dark); background: var(--blush); }
   .outcome-btn.held.selected { border-color: var(--sage-dark); background: var(--sage); }
+  .mood-btn { min-width: 0; padding: 10px 4px; font-size: 22px; }
 
   /* Encourage */
   .encourage { background: linear-gradient(135deg, var(--sage), var(--cream)); border-radius: 12px; padding: 16px; font-size: 13px; line-height: 1.6; color: var(--text); margin-top: 12px; display: none; }
@@ -911,13 +935,20 @@ function renderPlan() {
       const isToday = d.day === dayNum;
       const isDone = completed.includes(d.day);
       return `
-        <div class="day-row" onclick="toggleDay(${d.day})">
-          <div class="day-num ${isToday ? 'today' : isDone ? 'done' : ''}">${d.day}</div>
-          <div class="day-content">
-            <div class="day-label">${d.label}: ${d.task}</div>
-            <div class="day-task">${d.detail.substring(0,85)}${d.detail.length > 85 ? '...' : ''}</div>
+        <div class="day-row" id="dayrow-${d.day}">
+          <div class="day-row-top" onclick="toggleExpand(${d.day})">
+            <div class="day-num ${isToday ? 'today' : isDone ? 'done' : ''}">${d.day}</div>
+            <div class="day-content">
+              <div class="day-label">${d.label}: ${d.task}</div>
+              <div class="day-task">Tap to read more</div>
+            </div>
+            <div class="day-expand" id="expand-arrow-${d.day}">▾</div>
+            <div class="day-check ${isDone ? 'checked' : ''}" onclick="event.stopPropagation(); toggleDay(${d.day})" title="Mark complete"></div>
           </div>
-          <div class="day-check ${isDone ? 'checked' : ''}"></div>
+          <div class="day-detail" id="day-detail-${d.day}">
+            ${d.detail}
+            <div class="day-detail-goal">🎯 Goal: ${d.goal}</div>
+          </div>
         </div>`;
     }).join('');
   });
@@ -928,6 +959,14 @@ function showWeek(week, btn) {
   document.getElementById('week-' + week).style.display = 'block';
   document.querySelectorAll('.week-tab').forEach(el => el.classList.remove('active'));
   btn.classList.add('active');
+}
+
+function toggleExpand(dayNum) {
+  const detail = document.getElementById('day-detail-' + dayNum);
+  const arrow = document.getElementById('expand-arrow-' + dayNum);
+  const isOpen = detail.classList.contains('open');
+  detail.classList.toggle('open', !isOpen);
+  arrow.classList.toggle('open', !isOpen);
 }
 
 function toggleDay(dayNum) {
