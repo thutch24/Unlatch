@@ -424,10 +424,15 @@
   <div class="login-title">Unlatch</div>
   <p class="login-tagline">Your gentle weaning companion.<br>Sign in to sync across all your devices.</p>
   <div class="login-card">
-    <h2>Welcome, mama 👋</h2>
-    <p>Enter your email and we'll send you a magic link — no password needed.</p>
+    <h2 id="loginTitle">Welcome back 👋</h2>
+    <p id="loginSubtitle">Sign in to access your journey.</p>
     <input type="email" id="loginEmail" class="login-input" placeholder="your@email.com">
-    <button class="login-btn" id="loginBtn" onclick="sendMagicLink()">Send Magic Link</button>
+    <input type="password" id="loginPassword" class="login-input" placeholder="Password" style="margin-top:0;">
+    <input type="password" id="loginPasswordConfirm" class="login-input" placeholder="Confirm password" style="display:none;margin-top:0;">
+    <button class="login-btn" id="loginBtn" onclick="handleAuth()">Sign In</button>
+    <button onclick="toggleAuthMode()" style="width:100%;margin-top:10px;background:none;border:none;color:var(--text-light);font-size:13px;cursor:pointer;padding:8px;" id="toggleBtn">
+      First time? Create an account
+    </button>
     <div class="login-message" id="loginMessage"></div>
   </div>
 </div>
@@ -752,8 +757,21 @@ let saveTimer = null;
 
 // =================== AUTH ===================
 
-async function sendMagicLink() {
+let isSignUpMode = false;
+
+function toggleAuthMode() {
+  isSignUpMode = !isSignUpMode;
+  document.getElementById('loginTitle').textContent = isSignUpMode ? 'Create account 🌸' : 'Welcome back 👋';
+  document.getElementById('loginSubtitle').textContent = isSignUpMode ? 'Set up your account to get started.' : 'Sign in to access your journey.';
+  document.getElementById('loginBtn').textContent = isSignUpMode ? 'Create Account' : 'Sign In';
+  document.getElementById('toggleBtn').textContent = isSignUpMode ? 'Already have an account? Sign in' : 'First time? Create an account';
+  document.getElementById('loginPasswordConfirm').style.display = isSignUpMode ? 'block' : 'none';
+  document.getElementById('loginMessage').className = 'login-message';
+}
+
+async function handleAuth() {
   const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
   const msg = document.getElementById('loginMessage');
   const btn = document.getElementById('loginBtn');
 
@@ -762,24 +780,44 @@ async function sendMagicLink() {
     msg.textContent = 'Please enter a valid email address.';
     return;
   }
+  if (password.length < 6) {
+    msg.className = 'login-message error';
+    msg.textContent = 'Password must be at least 6 characters.';
+    return;
+  }
+  if (isSignUpMode) {
+    const confirm = document.getElementById('loginPasswordConfirm').value;
+    if (password !== confirm) {
+      msg.className = 'login-message error';
+      msg.textContent = 'Passwords don\'t match.';
+      return;
+    }
+  }
 
   btn.disabled = true;
-  btn.textContent = 'Sending...';
+  btn.textContent = isSignUpMode ? 'Creating...' : 'Signing in...';
 
-  const { error } = await sb.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: window.location.href }
-  });
-
-  if (error) {
-    msg.className = 'login-message error';
-    msg.textContent = 'Something went wrong. Please try again.';
-    btn.disabled = false;
-    btn.textContent = 'Send Magic Link';
+  if (isSignUpMode) {
+    const { error } = await sb.auth.signUp({ email, password });
+    if (error) {
+      msg.className = 'login-message error';
+      msg.textContent = error.message || 'Something went wrong.';
+      btn.disabled = false;
+      btn.textContent = 'Create Account';
+    } else {
+      msg.className = 'login-message success';
+      msg.textContent = '✅ Account created! Check your email to confirm, then sign in.';
+      btn.textContent = 'Account created!';
+    }
   } else {
-    msg.className = 'login-message success';
-    msg.textContent = '✉️ Magic link sent! Check your email and tap the link to sign in. You can close this tab once you\'ve tapped the link.';
-    btn.textContent = 'Link sent!';
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) {
+      msg.className = 'login-message error';
+      msg.textContent = 'Incorrect email or password.';
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+    }
+    // on success, onAuthStateChange fires and loads the app
   }
 }
 
@@ -1333,10 +1371,23 @@ sb.auth.onAuthStateChange(async (event, session) => {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('loadingScreen').style.display = 'flex';
 
-  const { data: { session } } = await sb.auth.getSession();
-  if (session?.user) {
-    await initApp(session.user);
-  } else {
+  // Timeout fallback — if Supabase takes too long, show login screen
+  const timeout = setTimeout(() => {
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+  }, 6000);
+
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    clearTimeout(timeout);
+    if (session?.user) {
+      await initApp(session.user);
+    } else {
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('loginScreen').style.display = 'flex';
+    }
+  } catch (e) {
+    clearTimeout(timeout);
     document.getElementById('loadingScreen').style.display = 'none';
     document.getElementById('loginScreen').style.display = 'flex';
   }
