@@ -1564,9 +1564,12 @@ async function submitNewPassword() {
   } else {
     msg.className = 'login-message success';
     msg.textContent = '✅ Password updated! Loading your app...';
+    // Clear the recovery hash from the URL so it doesn't re-trigger
+    history.replaceState(null, '', window.location.pathname);
     setTimeout(async () => {
       const { data: { session } } = await sb.auth.getSession();
       if (session?.user) await initApp(session.user);
+      else showScreen('loginScreen');
     }, 1500);
   }
 }
@@ -1592,6 +1595,13 @@ sb.auth.onAuthStateChange(async (event, session) => {
 
 // Check existing session on load
 (async () => {
+  // Detect password recovery link BEFORE anything else
+  const hash = window.location.hash;
+  if (hash.includes('type=recovery') || hash.includes('type%3Drecovery')) {
+    showScreen('recoveryScreen');
+    return;
+  }
+
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('loadingScreen').style.display = 'flex';
 
