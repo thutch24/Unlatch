@@ -440,6 +440,25 @@
   </div>
 </div>
 
+<!-- Password Recovery Screen -->
+<div id="recoveryScreen" style="display:none;min-height:100vh;align-items:center;justify-content:center;padding:40px 24px;background:linear-gradient(160deg,var(--blush) 0%,var(--lavender) 50%,var(--cream) 100%);flex-direction:column;">
+  <div class="login-logo">🔑</div>
+  <div class="login-title" style="font-size:26px;">Set new password</div>
+  <p style="font-size:14px;color:var(--text-light);margin:8px 0 28px;text-align:center;">Choose a new password for your account.</p>
+  <div class="login-card">
+    <div class="input-row">
+      <label>New password</label>
+      <input type="password" id="recoveryPassword" class="login-input" placeholder="At least 6 characters">
+    </div>
+    <div class="input-row">
+      <label>Confirm password</label>
+      <input type="password" id="recoveryPasswordConfirm" class="login-input" placeholder="Repeat new password">
+    </div>
+    <button class="login-btn" id="recoveryBtn" onclick="submitNewPassword()">Set Password</button>
+    <div class="login-message" id="recoveryMsg"></div>
+  </div>
+</div>
+
 <!-- Loading -->
 <div id="loadingScreen">
   <div class="spinner"></div>
@@ -454,7 +473,6 @@
     <h1>🌸 Unlatch</h1>
     <p class="tagline">You've got this, mama</p>
     <div class="day-badge" id="dayBadge">Loading...</div>
-    <button class="logout-btn" onclick="logout()">Sign out</button>
   </div>
 
   <nav class="bottom-nav">
@@ -473,6 +491,10 @@
     <button class="nav-item" onclick="showPage('tips', this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       Tips
+    </button>
+    <button class="nav-item" onclick="showPage('profile', this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Profile
     </button>
   </nav>
 
@@ -648,6 +670,51 @@
     <div class="card" style="background:linear-gradient(135deg,#fff0f8,#f8f0ff);margin-bottom:8px;">
       <div style="font-size:15px;font-weight:700;margin-bottom:8px;">You've got this 💛</div>
       <div style="font-size:13px;line-height:1.7;color:var(--text);">18 months of breastfeeding is genuinely incredible. You are not abandoning her — you are teaching her a new way to feel safe. She is almost 18 months old. She is ready, even if she doesn't think so yet.</div>
+    </div>
+  </div>
+
+  <!-- PROFILE -->
+  <div id="page-profile" class="page">
+    <div style="padding:16px 16px 0;font-size:18px;font-weight:700;">My Profile</div>
+
+    <div class="card">
+      <div class="card-title">About You</div>
+      <div class="input-row">
+        <label>Your name</label>
+        <input type="text" id="profileMamaName" placeholder="e.g. Tessa">
+      </div>
+      <div class="input-row">
+        <label>Baby's name</label>
+        <input type="text" id="profileBabyName" placeholder="e.g. Isla">
+      </div>
+      <div class="input-row">
+        <label>Baby's date of birth</label>
+        <input type="date" id="profileBabyDob">
+      </div>
+      <button class="btn btn-primary" onclick="saveProfile()">Save Details</button>
+      <div id="profileSaveMsg" style="display:none;margin-top:10px;font-size:13px;color:var(--sage-dark);font-weight:600;text-align:center;">✓ Saved!</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Account</div>
+      <div style="font-size:13px;color:var(--text-light);margin-bottom:14px;" id="profileEmail">—</div>
+
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--text);">Change Password</div>
+      <div class="input-row">
+        <label>New password</label>
+        <input type="password" id="newPassword" placeholder="At least 6 characters">
+      </div>
+      <div class="input-row">
+        <label>Confirm new password</label>
+        <input type="password" id="newPasswordConfirm" placeholder="Repeat new password">
+      </div>
+      <button class="btn btn-primary" onclick="changePassword()" id="changePwBtn">Update Password</button>
+      <div id="pwMsg" style="display:none;margin-top:10px;font-size:13px;font-weight:600;text-align:center;"></div>
+    </div>
+
+    <div class="card" style="background:linear-gradient(135deg,#fff0f0,#fff8f0);">
+      <div style="font-size:13px;color:var(--text-light);margin-bottom:12px;">Signed in as <strong id="profileEmailFooter">—</strong></div>
+      <button class="btn btn-outline" onclick="logout()" style="border-color:var(--danger);color:var(--danger);">Sign Out</button>
     </div>
   </div>
 
@@ -865,8 +932,7 @@ async function logout() {
   await sb.auth.signOut();
   currentUser = null;
   appState = {};
-  document.getElementById('appContainer').style.display = 'none';
-  document.getElementById('loginScreen').style.display = 'flex';
+  showScreen('loginScreen');
 }
 
 // =================== DATA ===================
@@ -954,6 +1020,10 @@ function getDayNumber(startDate) {
 function renderHome() {
   const s = getState();
   const dayNum = getDayNumber(s.startDate);
+  const mamaName = s.profile?.mamaName;
+  const babyName = s.profile?.babyName;
+  document.querySelector('.app-header .tagline').textContent =
+    mamaName ? `You've got this, ${mamaName} 🌸` : "You've got this, mama";
 
   document.getElementById('dayBadge').textContent =
     s.startDate ? `Started ${formatDate(s.startDate)}` : 'Set your start date in Plan tab';
@@ -1358,6 +1428,76 @@ function loadCues(disabled) {
   });
 }
 
+// =================== PROFILE ===================
+
+function renderProfile() {
+  const s = getState();
+  const profile = s.profile || {};
+  document.getElementById('profileMamaName').value = profile.mamaName || '';
+  document.getElementById('profileBabyName').value = profile.babyName || '';
+  document.getElementById('profileBabyDob').value = profile.babyDob || '';
+  document.getElementById('profileEmail').textContent = currentUser?.email || '—';
+  document.getElementById('profileEmailFooter').textContent = currentUser?.email || '—';
+  document.getElementById('profileSaveMsg').style.display = 'none';
+  document.getElementById('pwMsg').style.display = 'none';
+  document.getElementById('newPassword').value = '';
+  document.getElementById('newPasswordConfirm').value = '';
+}
+
+function saveProfile() {
+  const s = getState();
+  s.profile = {
+    mamaName: document.getElementById('profileMamaName').value.trim(),
+    babyName: document.getElementById('profileBabyName').value.trim(),
+    babyDob: document.getElementById('profileBabyDob').value,
+  };
+  saveState(s);
+  const msg = document.getElementById('profileSaveMsg');
+  msg.style.display = 'block';
+  setTimeout(() => msg.style.display = 'none', 2500);
+
+  // Update header greeting if name set
+  const name = s.profile.babyName;
+  if (name) document.querySelector('.app-header .tagline').textContent = `You've got this, ${s.profile.mamaName || 'mama'} 🌸`;
+}
+
+async function changePassword() {
+  const pw = document.getElementById('newPassword').value;
+  const confirm = document.getElementById('newPasswordConfirm').value;
+  const msg = document.getElementById('pwMsg');
+  const btn = document.getElementById('changePwBtn');
+
+  if (pw.length < 6) {
+    msg.style.display = 'block';
+    msg.style.color = 'var(--danger)';
+    msg.textContent = 'Password must be at least 6 characters.';
+    return;
+  }
+  if (pw !== confirm) {
+    msg.style.display = 'block';
+    msg.style.color = 'var(--danger)';
+    msg.textContent = 'Passwords don\'t match.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Updating...';
+
+  const { error } = await sb.auth.updateUser({ password: pw });
+  msg.style.display = 'block';
+  if (error) {
+    msg.style.color = 'var(--danger)';
+    msg.textContent = error.message || 'Something went wrong.';
+  } else {
+    msg.style.color = 'var(--sage-dark)';
+    msg.textContent = '✓ Password updated!';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('newPasswordConfirm').value = '';
+  }
+  btn.disabled = false;
+  btn.textContent = 'Update Password';
+}
+
 // =================== NAVIGATION ===================
 
 function showPage(name, btn) {
@@ -1368,6 +1508,7 @@ function showPage(name, btn) {
   if (name === 'home') renderHome();
   if (name === 'plan') renderPlan();
   if (name === 'tracker') { viewingDate = getToday(); renderTracker(); }
+  if (name === 'profile') renderProfile();
 }
 
 function openModal(id) { document.getElementById(id).classList.add('open'); }
@@ -1381,28 +1522,71 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 
 async function initApp(user) {
   currentUser = user;
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('loadingScreen').style.display = 'flex';
-
+  showScreen('loadingScreen');
   await loadFromCloud();
-
-  document.getElementById('loadingScreen').style.display = 'none';
-  document.getElementById('appContainer').style.display = 'block';
-
+  showScreen('appContainer');
   renderHome();
   renderPlan();
   renderTracker();
 }
 
+function showScreen(name) {
+  ['loginScreen','loadingScreen','recoveryScreen','appContainer'].forEach(id => {
+    const el = document.getElementById(id);
+    el.style.display = 'none';
+  });
+  const target = document.getElementById(name);
+  target.style.display = (name === 'appContainer') ? 'block' : 'flex';
+}
+
+async function submitNewPassword() {
+  const pw = document.getElementById('recoveryPassword').value;
+  const confirm = document.getElementById('recoveryPasswordConfirm').value;
+  const msg = document.getElementById('recoveryMsg');
+  const btn = document.getElementById('recoveryBtn');
+
+  if (pw.length < 6) {
+    msg.className = 'login-message error'; msg.textContent = 'Password must be at least 6 characters.'; return;
+  }
+  if (pw !== confirm) {
+    msg.className = 'login-message error'; msg.textContent = "Passwords don't match."; return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+
+  const { error } = await sb.auth.updateUser({ password: pw });
+  if (error) {
+    msg.className = 'login-message error';
+    msg.textContent = error.message || 'Something went wrong.';
+    btn.disabled = false;
+    btn.textContent = 'Set Password';
+  } else {
+    msg.className = 'login-message success';
+    msg.textContent = '✅ Password updated! Loading your app...';
+    setTimeout(async () => {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session?.user) await initApp(session.user);
+    }, 1500);
+  }
+}
+
 // Handle auth state
 sb.auth.onAuthStateChange(async (event, session) => {
-  if (session?.user) {
-    await initApp(session.user);
-  } else {
+  if (event === 'PASSWORD_RECOVERY') {
+    // User clicked reset link — show the set-new-password screen
+    showScreen('recoveryScreen');
+    return;
+  }
+  if (event === 'SIGNED_IN' && session?.user) {
+    // Only load app if we're not in recovery flow
+    if (document.getElementById('recoveryScreen').style.display !== 'flex') {
+      await initApp(session.user);
+    }
+  }
+  if (event === 'SIGNED_OUT') {
     currentUser = null;
-    document.getElementById('appContainer').style.display = 'none';
-    document.getElementById('loadingScreen').style.display = 'none';
-    document.getElementById('loginScreen').style.display = 'flex';
+    showScreen('loginScreen');
   }
 });
 
@@ -1411,11 +1595,7 @@ sb.auth.onAuthStateChange(async (event, session) => {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('loadingScreen').style.display = 'flex';
 
-  // Timeout fallback — if Supabase takes too long, show login screen
-  const timeout = setTimeout(() => {
-    document.getElementById('loadingScreen').style.display = 'none';
-    document.getElementById('loginScreen').style.display = 'flex';
-  }, 6000);
+  const timeout = setTimeout(() => showScreen('loginScreen'), 6000);
 
   try {
     const { data: { session } } = await sb.auth.getSession();
@@ -1423,13 +1603,11 @@ sb.auth.onAuthStateChange(async (event, session) => {
     if (session?.user) {
       await initApp(session.user);
     } else {
-      document.getElementById('loadingScreen').style.display = 'none';
-      document.getElementById('loginScreen').style.display = 'flex';
+      showScreen('loginScreen');
     }
   } catch (e) {
     clearTimeout(timeout);
-    document.getElementById('loadingScreen').style.display = 'none';
-    document.getElementById('loginScreen').style.display = 'flex';
+    showScreen('loginScreen');
   }
 })();
 </script>
