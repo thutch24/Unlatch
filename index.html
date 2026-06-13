@@ -819,7 +819,16 @@
 const { createClient } = supabase;
 const sb = createClient(
   'https://gbrrvveklqrolgzonxdp.supabase.co',
-  'sb_publishable_DT7hgSHQJzcwahSAoojKKQ_QX3hO3T4'
+  'sb_publishable_DT7hgSHQJzcwahSAoojKKQ_QX3hO3T4',
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      storageKey: 'unlatch-auth-token',
+      storage: window.localStorage,
+    }
+  }
 );
 
 let appState = {};
@@ -1353,7 +1362,7 @@ function selectNightOutcome(btn, val) {
   const enc = document.getElementById('nightEncourage');
   const messages = {
     'self-settled': '⭐ She settled herself!! That is the whole goal — her brain is learning. Go back to sleep, you\'ve earned it.',
-    'held-line': '💪 You held the line. That is incredibly hard in the middle of the night. That moment just taught her brain something new. It gets easier.',
+    'held-line': '💪 You held the line. That is incredibly hard when she is screaming for the boob. That moment just taught her brain something new. It gets easier.',
     'gave-in': '💛 You are exhausted. Giving in once does not mean failure — it means you are human. Log it, rest, and try again next wake.',
     'partial': '🌱 A partial win is still a win. You went to her, you tried, and you got partway there. Keep building.'
   };
