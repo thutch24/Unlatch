@@ -124,6 +124,107 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* Onboarding Screen */
+  #onboardingScreen {
+    min-height: 100vh;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    background: var(--cream);
+    padding: 0;
+    overflow-y: auto;
+  }
+  .ob-wrap {
+    width: 100%;
+    max-width: 440px;
+    padding: 40px 24px 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .ob-progress {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 32px;
+  }
+  .ob-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--blush);
+    transition: background 0.3s;
+  }
+  .ob-dot.active { background: var(--blush-dark); }
+  .ob-dot.done { background: var(--sage-dark); }
+  .ob-step { display: none; }
+  .ob-step.active { display: flex; flex-direction: column; gap: 20px; }
+  .ob-emoji { font-size: 48px; text-align: center; margin-bottom: 4px; }
+  .ob-title { font-size: 24px; font-weight: 700; color: var(--text); text-align: center; line-height: 1.3; }
+  .ob-sub { font-size: 15px; color: var(--text-light); text-align: center; line-height: 1.5; }
+  .ob-fields { display: flex; flex-direction: column; gap: 14px; }
+  .ob-field label { display: block; font-size: 13px; font-weight: 600; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .ob-field input, .ob-field select {
+    width: 100%; padding: 14px 16px;
+    border: 2px solid var(--blush);
+    border-radius: 14px;
+    font-size: 16px;
+    background: white;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .ob-field input:focus, .ob-field select:focus { border-color: var(--blush-dark); }
+  .ob-chip-group { display: flex; flex-wrap: wrap; gap: 10px; }
+  .ob-chip {
+    padding: 10px 16px;
+    border-radius: 24px;
+    border: 2px solid var(--blush);
+    background: white;
+    font-size: 14px;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+  .ob-chip.selected {
+    background: var(--blush-dark);
+    border-color: var(--blush-dark);
+    color: white;
+    font-weight: 600;
+  }
+  .ob-btn {
+    padding: 16px;
+    border-radius: 14px;
+    border: none;
+    background: var(--blush-dark);
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 8px;
+    transition: opacity 0.2s;
+  }
+  .ob-btn:active { opacity: 0.8; }
+  .ob-btn-secondary {
+    background: none;
+    color: var(--text-light);
+    font-size: 14px;
+    padding: 8px;
+    border: none;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  .ob-welcome-art {
+    font-size: 64px;
+    text-align: center;
+    margin: 16px 0;
+    line-height: 1;
+  }
+
   /* App */
   #appContainer { display: none; }
 
@@ -465,6 +566,90 @@
   <div style="font-size:14px;color:var(--text-muted);">Loading your journey...</div>
 </div>
 
+<!-- Onboarding Screen -->
+<div id="onboardingScreen">
+  <div class="ob-wrap">
+    <!-- Progress dots -->
+    <div class="ob-progress">
+      <div class="ob-dot active" id="ob-dot-0"></div>
+      <div class="ob-dot" id="ob-dot-1"></div>
+      <div class="ob-dot" id="ob-dot-2"></div>
+      <div class="ob-dot" id="ob-dot-3"></div>
+    </div>
+
+    <!-- Step 1: Welcome -->
+    <div class="ob-step active" id="ob-step-0">
+      <div class="ob-welcome-art">🌸</div>
+      <div class="ob-title">Welcome to Unlatch</div>
+      <div class="ob-sub">Let's set up your app so it feels just right for you and your little one. Takes about 60 seconds.</div>
+      <div class="ob-fields">
+        <div class="ob-field">
+          <label>Your name</label>
+          <input type="text" id="ob-mama-name" placeholder="e.g. Tessa" autocomplete="given-name">
+        </div>
+      </div>
+      <button class="ob-btn" onclick="obNext(0)">Let's go →</button>
+    </div>
+
+    <!-- Step 2: Baby details -->
+    <div class="ob-step" id="ob-step-1">
+      <div class="ob-emoji">👶</div>
+      <div class="ob-title">Tell me about your baby</div>
+      <div class="ob-sub">This helps personalise your plan and encouragement.</div>
+      <div class="ob-fields">
+        <div class="ob-field">
+          <label>Baby's name</label>
+          <input type="text" id="ob-baby-name" placeholder="e.g. Isla" autocomplete="off">
+        </div>
+        <div class="ob-field">
+          <label>Baby's birthday</label>
+          <input type="date" id="ob-baby-dob">
+        </div>
+        <div class="ob-field">
+          <label>Baby's gender (for pronouns in the app)</label>
+          <div class="ob-chip-group" id="ob-gender-chips">
+            <button class="ob-chip" onclick="selectChip('ob-gender-chips', this, 'she/her')">Girl 👧</button>
+            <button class="ob-chip" onclick="selectChip('ob-gender-chips', this, 'he/him')">Boy 👦</button>
+            <button class="ob-chip" onclick="selectChip('ob-gender-chips', this, 'they/them')">Non-binary 🌈</button>
+          </div>
+        </div>
+      </div>
+      <button class="ob-btn" onclick="obNext(1)">Next →</button>
+      <button class="ob-btn-secondary" onclick="obBack(1)">← Back</button>
+    </div>
+
+    <!-- Step 3: Feeding type -->
+    <div class="ob-step" id="ob-step-2">
+      <div class="ob-emoji">🍼</div>
+      <div class="ob-title">How are you currently feeding?</div>
+      <div class="ob-sub">Helps us tailor your tips and plan focus.</div>
+      <div class="ob-chip-group" id="ob-feeding-chips" style="flex-direction:column;">
+        <button class="ob-chip" style="text-align:left;" onclick="selectChip('ob-feeding-chips', this, 'exclusive-bf')">🤱 Exclusively breastfed</button>
+        <button class="ob-chip" style="text-align:left;" onclick="selectChip('ob-feeding-chips', this, 'bf-solids')">🤱🥦 Breastfed + eating solids well</button>
+        <button class="ob-chip" style="text-align:left;" onclick="selectChip('ob-feeding-chips', this, 'mixed')">🤱🍼 Mixed (breast + formula)</button>
+        <button class="ob-chip" style="text-align:left;" onclick="selectChip('ob-feeding-chips', this, 'mostly-solids')">🥦 Mostly solids, still nursing</button>
+      </div>
+      <button class="ob-btn" onclick="obNext(2)">Next →</button>
+      <button class="ob-btn-secondary" onclick="obBack(2)">← Back</button>
+    </div>
+
+    <!-- Step 4: Weaning goal -->
+    <div class="ob-step" id="ob-step-3">
+      <div class="ob-emoji">🎯</div>
+      <div class="ob-title">What's your weaning goal?</div>
+      <div class="ob-sub">No right or wrong answer — this is your journey.</div>
+      <div class="ob-chip-group" id="ob-goal-chips" style="flex-direction:column;">
+        <button class="ob-chip" style="text-align:left;" onclick="selectChip('ob-goal-chips', this, 'fully-wean')">🌙 Fully wean — stop all breastfeeding</button>
+        <button class="ob-chip" style="text-align:left;" onclick="selectChip('ob-goal-chips', this, 'drop-overnight')">😴 Drop overnight feeds only</button>
+        <button class="ob-chip" style="text-align:left;" onclick="selectChip('ob-goal-chips', this, 'keep-morning-bed')">☀️ Keep morning & bedtime, drop the rest</button>
+        <button class="ob-chip" style="text-align:left;" onclick="selectChip('ob-goal-chips', this, 'baby-led')">🌿 Baby-led — reduce gradually</button>
+      </div>
+      <button class="ob-btn" onclick="obFinish()">Let's do this 🌸</button>
+      <button class="ob-btn-secondary" onclick="obBack(3)">← Back</button>
+    </div>
+  </div>
+</div>
+
 <!-- App -->
 <div id="appContainer">
 
@@ -678,7 +863,7 @@
     <div style="padding:16px 16px 0;font-size:18px;font-weight:700;">My Profile</div>
 
     <div class="card">
-      <div class="card-title">About You</div>
+      <div class="card-title">About You & Your Baby</div>
       <div class="input-row">
         <label>Your name</label>
         <input type="text" id="profileMamaName" placeholder="e.g. Tessa">
@@ -690,6 +875,34 @@
       <div class="input-row">
         <label>Baby's date of birth</label>
         <input type="date" id="profileBabyDob">
+      </div>
+      <div class="input-row">
+        <label>Baby's pronouns</label>
+        <select id="profileGender" style="width:100%;padding:10px 12px;border:1px solid var(--blush-dark);border-radius:10px;font-size:15px;background:white;color:var(--text);">
+          <option value="she/her">She / Her</option>
+          <option value="he/him">He / Him</option>
+          <option value="they/them">They / Them</option>
+        </select>
+      </div>
+      <div class="input-row">
+        <label>Current feeding type</label>
+        <select id="profileFeedingType" style="width:100%;padding:10px 12px;border:1px solid var(--blush-dark);border-radius:10px;font-size:15px;background:white;color:var(--text);">
+          <option value="">Select...</option>
+          <option value="exclusive-bf">🤱 Exclusively breastfed</option>
+          <option value="bf-solids">🤱🥦 Breastfed + eating solids well</option>
+          <option value="mixed">🤱🍼 Mixed (breast + formula)</option>
+          <option value="mostly-solids">🥦 Mostly solids, still nursing</option>
+        </select>
+      </div>
+      <div class="input-row">
+        <label>Weaning goal</label>
+        <select id="profileWeaningGoal" style="width:100%;padding:10px 12px;border:1px solid var(--blush-dark);border-radius:10px;font-size:15px;background:white;color:var(--text);">
+          <option value="">Select...</option>
+          <option value="fully-wean">🌙 Fully wean — stop all breastfeeding</option>
+          <option value="drop-overnight">😴 Drop overnight feeds only</option>
+          <option value="keep-morning-bed">☀️ Keep morning & bedtime, drop the rest</option>
+          <option value="baby-led">🌿 Baby-led — reduce gradually</option>
+        </select>
       </div>
       <button class="btn btn-primary" onclick="saveProfile()">Save Details</button>
       <div id="profileSaveMsg" style="display:none;margin-top:10px;font-size:13px;color:var(--sage-dark);font-weight:600;text-align:center;">✓ Saved!</div>
@@ -949,15 +1162,22 @@ async function logout() {
 
 async function loadFromCloud() {
   if (!currentUser) return;
-  const { data, error } = await sb
-    .from('wean_data')
-    .select('data')
-    .eq('user_id', currentUser.id)
-    .single();
-
-  if (data && data.data) {
-    appState = data.data;
-  } else {
+  try {
+    const fetchPromise = sb
+      .from('wean_data')
+      .select('data')
+      .eq('user_id', currentUser.id)
+      .single();
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('timeout')), 5000)
+    );
+    const { data } = await Promise.race([fetchPromise, timeoutPromise]);
+    if (data && data.data) {
+      appState = data.data;
+    } else {
+      appState = {};
+    }
+  } catch(e) {
     appState = {};
   }
 }
@@ -1032,6 +1252,9 @@ function renderHome() {
   const dayNum = getDayNumber(s.startDate);
   const mamaName = s.profile?.mamaName;
   const babyName = s.profile?.babyName;
+  const pronoun = s.profile?.gender === 'he/him' ? 'he' : s.profile?.gender === 'they/them' ? 'they' : 'she';
+  const pronounPoss = pronoun === 'he' ? 'his' : pronoun === 'they' ? 'their' : 'her';
+  const babyRef = babyName || (pronoun === 'he' ? 'him' : pronoun === 'they' ? 'them' : 'her');
   document.querySelector('.app-header .tagline').textContent =
     mamaName ? `You've got this, ${mamaName} 🌸` : "You've got this, mama";
 
@@ -1066,9 +1289,12 @@ function renderHome() {
   const todayData = PLAN_DATA.find(d => d.day === dayNum);
   const focusEl = document.getElementById('todayFocus');
   if (todayData) {
-    focusEl.innerHTML = `<h3>🎯 Day ${dayNum}: ${todayData.task}</h3><p>${todayData.detail}</p>`;
+    const detail = todayData.detail
+      .replace(/\bshe\b/g, pronoun).replace(/\bher\b/g, pronounPoss)
+      .replace(/\bthe baby\b/gi, babyName || 'the baby');
+    focusEl.innerHTML = `<h3>🎯 Day ${dayNum}: ${todayData.task}</h3><p>${detail}</p>`;
   } else if (dayNum > 21) {
-    focusEl.innerHTML = `<h3>🌸 Journey Complete!</h3><p>You did it. Enjoy your sleep, mama. Check tips any time you need a reminder.</p>`;
+    focusEl.innerHTML = `<h3>🌸 Journey Complete!</h3><p>You did it${mamaName ? ', ' + mamaName : ''}. ${babyName ? babyName + ' and you' : 'You both'} made it. Enjoy your sleep. Check tips any time you need a reminder.</p>`;
   } else {
     focusEl.innerHTML = `<h3>🎯 Set your start date</h3><p>Tap "Set Start Date" in the Plan tab to begin your personalised 21-day journey.</p>`;
   }
@@ -1260,13 +1486,19 @@ function renderTrackerContent() {
   const list = document.getElementById('nightWakesList');
   list.innerHTML = wakes.length === 0
     ? `<div class="empty-state"><div class="empty-icon">🌙</div>${isPast ? 'No night wakes logged for this day' : 'No night wakes logged yet today'}</div>`
-    : wakes.map((w, i) => `
+    : wakes.map((w, i) => {
+      const _s = getState();
+      const _bn = _s.profile?.babyName || '';
+      const _pr = _s.profile?.gender === 'he/him' ? 'himself' : _s.profile?.gender === 'they/them' ? 'themselves' : 'herself';
+      const settledLabel = _bn ? `${_bn} settled ${_pr} ⭐` : `Settled ${_pr} ⭐`;
+      return `
       <div class="night-entry">
         <div class="wake-time">${w.time || '--'}</div>
         <div class="outcome-dot ${w.outcome === 'held-line' || w.outcome === 'self-settled' ? 'held' : w.outcome === 'gave-in' ? 'gave-in' : 'partial'}"></div>
-        <div class="wake-outcome">${w.outcome === 'self-settled' ? 'Settled herself ⭐' : w.outcome === 'held-line' ? 'Held the line 💪' : w.outcome === 'gave-in' ? 'Gave the boob 😮‍💨' : 'Partial win 🌱'}${w.duration ? ' · ' + w.duration : ''}</div>
+        <div class="wake-outcome">${w.outcome === 'self-settled' ? settledLabel : w.outcome === 'held-line' ? 'Held the line 💪' : w.outcome === 'gave-in' ? 'Gave the boob 😮‍💨' : 'Partial win 🌱'}${w.duration ? ' · ' + w.duration : ''}</div>
         ${!isPast ? `<button onclick="deleteWake(${i})" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;">✕</button>` : ''}
-      </div>`).join('');
+      </div>`;
+    }).join('');
 
   const savedMood = logs.mood;
   document.querySelectorAll('.mood-btn').forEach(b => {
@@ -1445,6 +1677,19 @@ function loadCues(disabled) {
 
 // =================== PROFILE ===================
 
+const FEEDING_LABELS = {
+  'exclusive-bf': '🤱 Exclusively breastfed',
+  'bf-solids': '🤱🥦 Breastfed + solids',
+  'mixed': '🤱🍼 Mixed feeding',
+  'mostly-solids': '🥦 Mostly solids, still nursing',
+};
+const GOAL_LABELS = {
+  'fully-wean': '🌙 Fully wean',
+  'drop-overnight': '😴 Drop overnight feeds only',
+  'keep-morning-bed': '☀️ Keep morning & bedtime',
+  'baby-led': '🌿 Baby-led reduction',
+};
+
 function renderProfile() {
   const s = getState();
   const profile = s.profile || {};
@@ -1457,23 +1702,37 @@ function renderProfile() {
   document.getElementById('pwMsg').style.display = 'none';
   document.getElementById('newPassword').value = '';
   document.getElementById('newPasswordConfirm').value = '';
+
+  // Feeding type select
+  const ftEl = document.getElementById('profileFeedingType');
+  if (ftEl) ftEl.value = profile.feedingType || '';
+
+  // Gender select
+  const gnEl = document.getElementById('profileGender');
+  if (gnEl) gnEl.value = profile.gender || 'she/her';
+
+  // Weaning goal select
+  const wgEl = document.getElementById('profileWeaningGoal');
+  if (wgEl) wgEl.value = profile.weaningGoal || '';
 }
 
 function saveProfile() {
   const s = getState();
   s.profile = {
+    ...( s.profile || {} ),
     mamaName: document.getElementById('profileMamaName').value.trim(),
     babyName: document.getElementById('profileBabyName').value.trim(),
     babyDob: document.getElementById('profileBabyDob').value,
+    gender: document.getElementById('profileGender')?.value || s.profile?.gender || 'she/her',
+    feedingType: document.getElementById('profileFeedingType')?.value || s.profile?.feedingType || '',
+    weaningGoal: document.getElementById('profileWeaningGoal')?.value || s.profile?.weaningGoal || '',
+    onboarded: true,
   };
   saveState(s);
   const msg = document.getElementById('profileSaveMsg');
   msg.style.display = 'block';
   setTimeout(() => msg.style.display = 'none', 2500);
-
-  // Update header greeting if name set
-  const name = s.profile.babyName;
-  if (name) document.querySelector('.app-header .tagline').textContent = `You've got this, ${s.profile.mamaName || 'mama'} 🌸`;
+  renderHome();
 }
 
 async function changePassword() {
@@ -1539,19 +1798,89 @@ async function initApp(user) {
   currentUser = user;
   showScreen('loadingScreen');
   await loadFromCloud();
-  showScreen('appContainer');
-  renderHome();
-  renderPlan();
-  renderTracker();
+  const s = getState();
+  if (!s.profile?.onboarded) {
+    showScreen('onboardingScreen');
+    obUpdateDots(0);
+  } else {
+    showScreen('appContainer');
+    renderHome();
+    renderPlan();
+    renderTracker();
+  }
 }
 
 function showScreen(name) {
-  ['loginScreen','loadingScreen','recoveryScreen','appContainer'].forEach(id => {
+  ['loginScreen','loadingScreen','recoveryScreen','onboardingScreen','appContainer'].forEach(id => {
     const el = document.getElementById(id);
     el.style.display = 'none';
   });
   const target = document.getElementById(name);
   target.style.display = (name === 'appContainer') ? 'block' : 'flex';
+}
+
+// =================== ONBOARDING ===================
+
+let obGender = null;
+let obFeeding = null;
+let obGoal = null;
+
+function selectChip(groupId, btn, value) {
+  document.querySelectorAll('#' + groupId + ' .ob-chip').forEach(c => c.classList.remove('selected'));
+  btn.classList.add('selected');
+  if (groupId === 'ob-gender-chips') obGender = value;
+  if (groupId === 'ob-feeding-chips') obFeeding = value;
+  if (groupId === 'ob-goal-chips') obGoal = value;
+}
+
+function obUpdateDots(step) {
+  [0,1,2,3].forEach(i => {
+    const dot = document.getElementById('ob-dot-' + i);
+    if (i < step) dot.className = 'ob-dot done';
+    else if (i === step) dot.className = 'ob-dot active';
+    else dot.className = 'ob-dot';
+  });
+}
+
+function obNext(currentStep) {
+  // Validate step 0: name optional, just proceed
+  if (currentStep === 0) {
+    // Step 0 → 1
+  } else if (currentStep === 1) {
+    // Optional: no hard validation — baby name/dob optional
+  } else if (currentStep === 2) {
+    if (!obFeeding) { alert('Please choose a feeding type to continue.'); return; }
+  }
+  document.getElementById('ob-step-' + currentStep).classList.remove('active');
+  document.getElementById('ob-step-' + (currentStep + 1)).classList.add('active');
+  obUpdateDots(currentStep + 1);
+  document.getElementById('onboardingScreen').scrollTo(0, 0);
+}
+
+function obBack(currentStep) {
+  document.getElementById('ob-step-' + currentStep).classList.remove('active');
+  document.getElementById('ob-step-' + (currentStep - 1)).classList.add('active');
+  obUpdateDots(currentStep - 1);
+  document.getElementById('onboardingScreen').scrollTo(0, 0);
+}
+
+async function obFinish() {
+  if (!obGoal) { alert('Please choose a weaning goal to continue.'); return; }
+  const s = getState();
+  s.profile = {
+    mamaName: (document.getElementById('ob-mama-name').value || '').trim(),
+    babyName: (document.getElementById('ob-baby-name').value || '').trim(),
+    babyDob: document.getElementById('ob-baby-dob').value || '',
+    gender: obGender || 'she/her',
+    feedingType: obFeeding,
+    weaningGoal: obGoal,
+    onboarded: true,
+  };
+  saveState(s);
+  showScreen('appContainer');
+  renderHome();
+  renderPlan();
+  renderTracker();
 }
 
 async function submitNewPassword() {
@@ -1620,13 +1949,20 @@ sb.auth.onAuthStateChange(async (event, session) => {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('loadingScreen').style.display = 'flex';
 
-  const timeout = setTimeout(() => showScreen('loginScreen'), 6000);
+  const timeout = setTimeout(() => showScreen('loginScreen'), 3000);
 
   try {
     const { data: { session } } = await sb.auth.getSession();
     clearTimeout(timeout);
     if (session?.user) {
-      await initApp(session.user);
+      const initTimeout = setTimeout(() => showScreen('loginScreen'), 8000);
+      try {
+        await initApp(session.user);
+      } catch(e) {
+        showScreen('loginScreen');
+      } finally {
+        clearTimeout(initTimeout);
+      }
     } else {
       showScreen('loginScreen');
     }
