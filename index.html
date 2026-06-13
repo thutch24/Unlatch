@@ -433,6 +433,9 @@
     <button onclick="toggleAuthMode()" style="width:100%;margin-top:10px;background:none;border:none;color:var(--text-light);font-size:13px;cursor:pointer;padding:8px;" id="toggleBtn">
       First time? Create an account
     </button>
+    <button onclick="showResetMode()" id="forgotBtn" style="width:100%;background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;padding:4px 8px;">
+      Forgot password?
+    </button>
     <div class="login-message" id="loginMessage"></div>
   </div>
 </div>
@@ -758,8 +761,27 @@ let saveTimer = null;
 // =================== AUTH ===================
 
 let isSignUpMode = false;
+let isResetMode = false;
+
+function showResetMode() {
+  isResetMode = true;
+  isSignUpMode = false;
+  document.getElementById('loginTitle').textContent = 'Reset password 🔑';
+  document.getElementById('loginSubtitle').textContent = 'Enter your email and we\'ll send a reset link.';
+  document.getElementById('loginPassword').style.display = 'none';
+  document.getElementById('loginPasswordConfirm').style.display = 'none';
+  document.getElementById('loginBtn').textContent = 'Send Reset Link';
+  document.getElementById('toggleBtn').textContent = 'Back to sign in';
+  document.getElementById('forgotBtn').style.display = 'none';
+  document.getElementById('loginMessage').className = 'login-message';
+}
 
 function toggleAuthMode() {
+  if (isResetMode) {
+    isResetMode = false;
+    document.getElementById('loginPassword').style.display = 'block';
+    document.getElementById('forgotBtn').style.display = 'block';
+  }
   isSignUpMode = !isSignUpMode;
   document.getElementById('loginTitle').textContent = isSignUpMode ? 'Create account 🌸' : 'Welcome back 👋';
   document.getElementById('loginSubtitle').textContent = isSignUpMode ? 'Set up your account to get started.' : 'Sign in to access your journey.';
@@ -795,6 +817,24 @@ async function handleAuth() {
   }
 
   btn.disabled = true;
+
+  if (isResetMode) {
+    btn.textContent = 'Sending...';
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.href
+    });
+    if (error) {
+      msg.className = 'login-message error';
+      msg.textContent = 'Something went wrong. Please try again.';
+    } else {
+      msg.className = 'login-message success';
+      msg.textContent = '✉️ Reset link sent! Check your email.';
+    }
+    btn.disabled = false;
+    btn.textContent = 'Send Reset Link';
+    return;
+  }
+
   btn.textContent = isSignUpMode ? 'Creating...' : 'Signing in...';
 
   if (isSignUpMode) {
