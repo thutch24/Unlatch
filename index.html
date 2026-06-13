@@ -768,9 +768,10 @@
     <div class="input-row">
       <label>What happened?</label>
       <div class="outcome-btns" id="nightOutcomeBtns">
+        <button class="outcome-btn held" onclick="selectNightOutcome(this,'self-settled')">Settled herself ⭐</button>
         <button class="outcome-btn held" onclick="selectNightOutcome(this,'held-line')">Held the line 💪</button>
-        <button class="outcome-btn" onclick="selectNightOutcome(this,'gave-in')">Gave the boob 😮‍💨</button>
         <button class="outcome-btn" onclick="selectNightOutcome(this,'partial')">Partial win 🌱</button>
+        <button class="outcome-btn" onclick="selectNightOutcome(this,'gave-in')">Gave the boob 😮‍💨</button>
       </div>
     </div>
     <div class="input-row">
@@ -1041,7 +1042,7 @@ function renderHome() {
 
   let goodNights = 0;
   Object.values(logs).forEach(day => {
-    if (day.overnight && day.overnight.some(w => w.outcome === 'held-line')) goodNights++;
+    if (day.overnight && day.overnight.some(w => w.outcome === 'held-line' || w.outcome === 'self-settled')) goodNights++;
   });
   document.getElementById('statNights').textContent = goodNights;
 
@@ -1253,8 +1254,8 @@ function renderTrackerContent() {
     : wakes.map((w, i) => `
       <div class="night-entry">
         <div class="wake-time">${w.time || '--'}</div>
-        <div class="outcome-dot ${w.outcome === 'held-line' ? 'held' : w.outcome === 'gave-in' ? 'gave-in' : 'partial'}"></div>
-        <div class="wake-outcome">${w.outcome === 'held-line' ? 'Held the line 💪' : w.outcome === 'gave-in' ? 'Gave the boob 😮‍💨' : 'Partial win 🌱'}${w.duration ? ' · ' + w.duration : ''}</div>
+        <div class="outcome-dot ${w.outcome === 'held-line' || w.outcome === 'self-settled' ? 'held' : w.outcome === 'gave-in' ? 'gave-in' : 'partial'}"></div>
+        <div class="wake-outcome">${w.outcome === 'self-settled' ? 'Settled herself ⭐' : w.outcome === 'held-line' ? 'Held the line 💪' : w.outcome === 'gave-in' ? 'Gave the boob 😮‍💨' : 'Partial win 🌱'}${w.duration ? ' · ' + w.duration : ''}</div>
         ${!isPast ? `<button onclick="deleteWake(${i})" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;">✕</button>` : ''}
       </div>`).join('');
 
@@ -1333,7 +1334,11 @@ function saveFeed() {
 
 function openNightModal() {
   currentNightOutcome = '';
-  document.getElementById('wakeTime').value = new Date().toTimeString().substring(0,5);
+  // Get current local time properly
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('wakeTime').value = `${hh}:${mm}`;
   document.getElementById('wakeDuration').value = '';
   document.getElementById('wakeNote').value = '';
   document.querySelectorAll('#nightOutcomeBtns .outcome-btn').forEach(b => b.classList.remove('selected'));
@@ -1347,7 +1352,8 @@ function selectNightOutcome(btn, val) {
   currentNightOutcome = val;
   const enc = document.getElementById('nightEncourage');
   const messages = {
-    'held-line': '💪 You held the line. That is incredibly hard at 2am. That moment just taught her brain something new. It gets easier.',
+    'self-settled': '⭐ She settled herself!! That is the whole goal — her brain is learning. Go back to sleep, you\'ve earned it.',
+    'held-line': '💪 You held the line. That is incredibly hard in the middle of the night. That moment just taught her brain something new. It gets easier.',
     'gave-in': '💛 You are exhausted. Giving in once does not mean failure — it means you are human. Log it, rest, and try again next wake.',
     'partial': '🌱 A partial win is still a win. You went to her, you tried, and you got partway there. Keep building.'
   };
