@@ -774,7 +774,7 @@
   <div id="page-tracker" class="page">
     <div style="padding:14px 16px 0;font-size:18px;font-weight:700;">Daily Log</div>
     <div class="date-strip-wrap"><div class="date-strip" id="dateStrip"></div></div>
-    <div class="past-date-banner" id="pastDateBanner">📅 Viewing past log — tap Today to log new data</div>
+    <div class="past-date-banner" id="pastDateBanner">📅 Editing past log — changes save to this date</div>
     <div style="padding:4px 16px 8px;display:flex;justify-content:space-between;align-items:center;">
       <div style="font-size:14px;font-weight:600;color:var(--text-light);" id="trackerDate"></div>
       <button id="jumpTodayBtn" onclick="selectDate(getToday())" style="display:none;font-size:12px;color:var(--blush-dark);background:var(--blush);border:none;border-radius:20px;padding:4px 12px;font-weight:700;cursor:pointer;">Today</button>
@@ -1458,10 +1458,9 @@ function renderTrackerContent() {
     const card = document.getElementById('feed-' + feed);
     if (!card) return;
     const statusEl = card.querySelector('.feed-status');
-    // Disable tapping on past dates
-    card.onclick = isPast ? null : (feed === 'overnight' ? openNightModal : () => openFeedModal(feed));
-    card.style.opacity = isPast ? '0.85' : '1';
-    card.style.cursor = isPast ? 'default' : 'pointer';
+    card.onclick = feed === 'overnight' ? openNightModal : () => openFeedModal(feed);
+    card.style.opacity = '1';
+    card.style.cursor = 'pointer';
 
     if (feed === 'overnight') {
       const wakes = logs.overnight || [];
@@ -1471,7 +1470,7 @@ function renderTrackerContent() {
         statusEl.className = 'feed-status fed';
         if (wakes.some(w => w.outcome === 'held-line')) card.classList.add('done');
       } else {
-        statusEl.textContent = isPast ? 'Not logged' : 'Tap to log';
+        statusEl.textContent = 'Tap to log';
         statusEl.className = 'feed-status pending-label';
       }
       return;
@@ -1479,7 +1478,7 @@ function renderTrackerContent() {
     const data = logs[feed];
     card.classList.remove('done','skipped');
     if (!data) {
-      statusEl.textContent = isPast ? 'Not logged' : 'Tap to log';
+      statusEl.textContent = 'Tap to log';
       statusEl.className = 'feed-status pending-label';
     } else if (data.outcome === 'fed') {
       statusEl.textContent = 'Fed';
@@ -1499,7 +1498,7 @@ function renderTrackerContent() {
   const wakes = logs.overnight || [];
   const list = document.getElementById('nightWakesList');
   list.innerHTML = wakes.length === 0
-    ? `<div class="empty-state"><div class="empty-icon">🌙</div>${isPast ? 'No night wakes logged for this day' : 'No night wakes logged yet today'}</div>`
+    ? `<div class="empty-state"><div class="empty-icon">🌙</div>No night wakes logged for this day</div>`
     : wakes.map((w, i) => {
       const _s = getState();
       const _bn = _s.profile?.babyName || '';
@@ -1510,21 +1509,21 @@ function renderTrackerContent() {
         <div class="wake-time">${w.time || '--'}</div>
         <div class="outcome-dot ${w.outcome === 'held-line' || w.outcome === 'self-settled' ? 'held' : w.outcome === 'gave-in' ? 'gave-in' : 'partial'}"></div>
         <div class="wake-outcome">${w.outcome === 'self-settled' ? settledLabel : w.outcome === 'held-line' ? 'Held the line 💪' : w.outcome === 'gave-in' ? 'Gave the boob 😮‍💨' : 'Partial win 🌱'}${w.duration ? ' · ' + w.duration : ''}</div>
-        ${!isPast ? `<button onclick="deleteWake(${i})" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;">✕</button>` : ''}
+        <button onclick="deleteWake(${i})" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;">✕</button>
       </div>`;
     }).join('');
 
   const savedMood = logs.mood;
   document.querySelectorAll('.mood-btn').forEach(b => {
     b.classList.toggle('selected', b.textContent === savedMood);
-    b.disabled = isPast;
-    b.style.opacity = isPast ? '0.7' : '1';
+    b.disabled = false;
+    b.style.opacity = '1';
   });
 
   document.getElementById('dayNote').value = logs.dayNote || '';
-  document.getElementById('dayNote').disabled = isPast;
+  document.getElementById('dayNote').disabled = false;
 
-  loadCues(isPast);
+  loadCues(false);
 }
 
 function openFeedModal(feed) {
@@ -1612,10 +1611,9 @@ function saveFeed() {
   if (!currentFeedOutcome) { alert('Please select what happened.'); return; }
   const feed = document.getElementById('currentFeed').value;
   const s = getState();
-  const today = getToday();
   if (!s.feedLogs) s.feedLogs = {};
-  if (!s.feedLogs[today]) s.feedLogs[today] = {};
-  s.feedLogs[today][feed] = { outcome: currentFeedOutcome, unlatch: currentUnlatch, note: document.getElementById('feedNote').value };
+  if (!s.feedLogs[viewingDate]) s.feedLogs[viewingDate] = {};
+  s.feedLogs[viewingDate][feed] = { outcome: currentFeedOutcome, unlatch: currentUnlatch, note: document.getElementById('feedNote').value };
   saveState(s);
   closeModal('feedModal');
   renderTracker();
@@ -1654,11 +1652,10 @@ function selectNightOutcome(btn, val) {
 function saveNightWake() {
   if (!currentNightOutcome) { alert('Please select what happened.'); return; }
   const s = getState();
-  const today = getToday();
   if (!s.feedLogs) s.feedLogs = {};
-  if (!s.feedLogs[today]) s.feedLogs[today] = {};
-  if (!s.feedLogs[today].overnight) s.feedLogs[today].overnight = [];
-  s.feedLogs[today].overnight.push({
+  if (!s.feedLogs[viewingDate]) s.feedLogs[viewingDate] = {};
+  if (!s.feedLogs[viewingDate].overnight) s.feedLogs[viewingDate].overnight = [];
+  s.feedLogs[viewingDate].overnight.push({
     time: document.getElementById('wakeTime').value,
     outcome: currentNightOutcome,
     duration: document.getElementById('wakeDuration').value,
@@ -1672,9 +1669,8 @@ function saveNightWake() {
 
 function deleteWake(idx) {
   const s = getState();
-  const today = getToday();
-  if (s.feedLogs?.[today]?.overnight) {
-    s.feedLogs[today].overnight.splice(idx, 1);
+  if (s.feedLogs?.[viewingDate]?.overnight) {
+    s.feedLogs[viewingDate].overnight.splice(idx, 1);
     saveState(s);
     renderTracker();
     renderHome();
@@ -1685,28 +1681,25 @@ function setMood(btn, emoji) {
   document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
   const s = getState();
-  const today = getToday();
   if (!s.feedLogs) s.feedLogs = {};
-  if (!s.feedLogs[today]) s.feedLogs[today] = {};
-  s.feedLogs[today].mood = emoji;
+  if (!s.feedLogs[viewingDate]) s.feedLogs[viewingDate] = {};
+  s.feedLogs[viewingDate].mood = emoji;
   saveState(s);
 }
 
 function saveDayNote() {
   const s = getState();
-  const today = getToday();
   if (!s.feedLogs) s.feedLogs = {};
-  if (!s.feedLogs[today]) s.feedLogs[today] = {};
-  s.feedLogs[today].dayNote = document.getElementById('dayNote').value;
+  if (!s.feedLogs[viewingDate]) s.feedLogs[viewingDate] = {};
+  s.feedLogs[viewingDate].dayNote = document.getElementById('dayNote').value;
   saveState(s);
 }
 
 function saveCues() {
   const s = getState();
-  const today = getToday();
   if (!s.feedLogs) s.feedLogs = {};
-  if (!s.feedLogs[today]) s.feedLogs[today] = {};
-  s.feedLogs[today].cues = {
+  if (!s.feedLogs[viewingDate]) s.feedLogs[viewingDate] = {};
+  s.feedLogs[viewingDate].cues = {
     c1: document.getElementById('cue1').checked,
     c2: document.getElementById('cue2').checked,
     c3: document.getElementById('cue3').checked
